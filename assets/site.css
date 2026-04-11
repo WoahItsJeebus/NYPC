@@ -1,0 +1,314 @@
+/* ============================================================
+   site.css — NY Pension Calendar styles
+   ============================================================ */
+
+/* ── Infinite-grid landing page ─────────────────────────── */
+html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+body { user-select: none; -webkit-user-select: none; background: var(--bg, #0b0f17); }
+
+/* Let the orb layer pan with the grid; promote to compositor layer */
+.bgOrbs { will-change: transform; }
+
+/* Grid viewport — fills the screen behind everything */
+#gridViewport {
+	position: fixed; inset: 0;
+	overflow: hidden;
+	cursor: grab;
+	z-index: 0;
+	touch-action: none;
+}
+body.dragging, body.dragging * { cursor: grabbing !important; }
+
+#gridSurface {
+	position: absolute;
+	inset: -5000%;
+	will-change: transform;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cpath d='M0 0H60V60' fill='none' stroke='%23ffffff' stroke-opacity='0.06' stroke-width='1'/%3E%3C/svg%3E");
+	background-size: 60px 60px;
+}
+
+#gridCursorGlow {
+	position: absolute;
+	inset: 0;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cpath d='M0 0H60V60' fill='none' stroke='%2300ffff' stroke-opacity='0.35' stroke-width='1'/%3E%3C/svg%3E");
+	background-size: 60px 60px;
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity .2s;
+	-webkit-mask-image: radial-gradient(circle at center, rgba(0,0,0,1) 0%, transparent 70%);
+	        mask-image: radial-gradient(circle at center, rgba(0,0,0,1) 0%, transparent 70%);
+	-webkit-mask-repeat: no-repeat;
+	        mask-repeat: no-repeat;
+	-webkit-mask-size: var(--glow-diameter, 360px) var(--glow-diameter, 360px);
+	        mask-size: var(--glow-diameter, 360px) var(--glow-diameter, 360px);
+	will-change: mask-position, -webkit-mask-position;
+}
+
+#gridGlow {
+	position: absolute;
+	width: 520px; height: 520px;
+	border-radius: 50%;
+	pointer-events: none;
+	background: radial-gradient(circle, rgba(0,255,255,0.08) 0%, transparent 70%);
+	transform: translate(-50%, -50%);
+	will-change: left, top;
+}
+
+#gridOrigin {
+	position: absolute;
+	width: 24px; height: 24px;
+	transform: translate(-50%, -50%);
+	pointer-events: none;
+}
+#gridOrigin::before,
+#gridOrigin::after {
+	content: "";
+	position: absolute;
+	background: rgba(255,255,255,0.18);
+	border-radius: 1px;
+}
+#gridOrigin::before { width: 1px; height: 100%; left: 50%; top: 0; }
+#gridOrigin::after  { height: 1px; width: 100%; top: 50%; left: 0; }
+
+/* Floating content layer on top of grid */
+#gridContent {
+	position: fixed;
+	bottom: 10px; left: 50%;
+	transform: translateX(-50%);
+	display: flex; flex-direction: column;
+	pointer-events: none;
+	z-index: 1;
+}
+
+/* Coordinate readout */
+#coordPill {
+	position: fixed;
+	top: 16px; left: 50%;
+	transform: translateX(-50%);
+	font-family: monospace;
+	font-size: 0.75rem;
+	color: var(--muted, #5a6070);
+	background: rgba(11,15,23,0.55);
+	backdrop-filter: blur(6px);
+	-webkit-backdrop-filter: blur(6px);
+	border: 1px solid rgba(255,255,255,0.06);
+	padding: 4px 14px;
+	border-radius: 20px;
+	z-index: 2;
+	pointer-events: none;
+	user-select: none;
+	opacity: 0;
+	transition: opacity .25s;
+}
+#coordPill.visible { opacity: 1; }
+
+/* Tab bar sits on top */
+.tabsBar { position: relative; z-index: 3; pointer-events: auto; }
+
+/* ── Month selector (fixed top bar) ───────────────────── */
+#monthSelector {
+	position: fixed;
+	top: 16px; left: 50%;
+	transform: translateX(-50%);
+	z-index: 10;
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	background: rgba(14,18,30,0.88);
+	backdrop-filter: blur(12px);
+	-webkit-backdrop-filter: blur(12px);
+	border: 1px solid rgba(255,255,255,0.1);
+	border-radius: 28px;
+	padding: 8px 20px;
+	pointer-events: auto;
+}
+
+#monthSelector button {
+	width: 32px; height: 32px;
+	border-radius: 50%;
+	border: 1px solid rgba(255,255,255,0.12);
+	background: rgba(255,255,255,0.05);
+	color: #eef1f6;
+	font-size: 0.85rem;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: background .15s;
+}
+#monthSelector button:hover {
+	background: rgba(255,255,255,0.12);
+}
+
+#monthLabel {
+	font-size: 1.05rem;
+	font-weight: 700;
+	color: var(--text, #eef1f6);
+	min-width: 170px;
+	text-align: center;
+}
+
+/* ── Legend ────────────────────────────────────────────── */
+#legend {
+	position: fixed;
+	top: 70px; left: 50%;
+	transform: translateX(-50%);
+	z-index: 10;
+	display: flex;
+	gap: 20px;
+	pointer-events: none;
+}
+
+.legend-item {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 0.78rem;
+	font-weight: 600;
+	color: var(--muted, #8a90a0);
+}
+
+.legend-swatch {
+	width: 18px; height: 18px;
+	border-radius: 5px;
+	display: inline-block;
+}
+.legend-swatch.mailing {
+	background: rgba(255,180,0,0.35);
+	border: 1px solid rgba(255,180,0,0.5);
+}
+.legend-swatch.deposit {
+	background: rgba(0,200,120,0.35);
+	border: 1px solid rgba(0,200,120,0.5);
+}
+
+/* ── Calendar on the grid surface ─────────────────────── */
+#calendarMount {
+	position: absolute;
+	top: 50%; left: 50%;
+	transform: translate(-50%, -50%);
+	pointer-events: none;
+	z-index: 1;
+}
+
+.cal-wrap {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 12px;
+}
+
+.cal-title {
+	font-size: 1.8rem;
+	font-weight: 900;
+	letter-spacing: -0.02em;
+	color: var(--text, #eef1f6);
+	text-align: center;
+	white-space: nowrap;
+}
+
+.cal-subtitle {
+	font-size: 0.85rem;
+	color: var(--muted, #5a6070);
+	font-weight: 600;
+	text-align: center;
+}
+.cal-subtitle a {
+	color: rgba(0,255,255,0.7);
+	text-decoration: none;
+	pointer-events: auto;
+}
+.cal-subtitle a:hover { text-decoration: underline; }
+
+.cal-wrap .versionBadge {
+	pointer-events: auto;
+}
+
+/* 7-column calendar grid */
+.cal-grid {
+	display: grid;
+	grid-template-columns: repeat(7, 130px);
+	gap: 2px;
+	margin-top: 8px;
+}
+
+/* Day-of-week header cells */
+.cal-header {
+	text-align: center;
+	font-size: 0.78rem;
+	font-weight: 700;
+	color: rgba(0,255,255,0.6);
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	padding: 8px 0;
+}
+
+/* Day cells */
+.cal-cell {
+	width: 130px;
+	height: 100px;
+	background: rgba(22,28,42,0.75);
+	border: 1px solid rgba(255,255,255,0.06);
+	border-radius: 10px;
+	padding: 8px 10px;
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	transition: border-color .15s, background .15s;
+}
+
+.cal-cell.cal-blank {
+	background: transparent;
+	border-color: transparent;
+}
+
+.cal-cell.cal-weekend {
+	background: rgba(22,28,42,0.5);
+}
+
+.cal-cell.cal-today {
+	border-color: rgba(0,255,255,0.45);
+	background: rgba(0,255,255,0.06);
+}
+
+.cal-cell.cal-payment {
+	border-color: rgba(255,255,255,0.12);
+}
+
+.cal-day-num {
+	font-size: 0.9rem;
+	font-weight: 700;
+	color: var(--text, #eef1f6);
+}
+
+.cal-weekend .cal-day-num {
+	color: rgba(238,241,246,0.45);
+}
+
+/* Payment badges */
+.cal-badges {
+	display: flex;
+	gap: 6px;
+	margin-top: auto;
+}
+
+.cal-badge {
+	font-size: 0.72rem;
+	font-weight: 800;
+	padding: 2px 8px;
+	border-radius: 6px;
+	letter-spacing: 0.04em;
+}
+
+.cal-badge.mailing {
+	background: rgba(255,180,0,0.2);
+	color: #ffb400;
+	border: 1px solid rgba(255,180,0,0.35);
+}
+
+.cal-badge.deposit {
+	background: rgba(0,200,120,0.2);
+	color: #00c878;
+	border: 1px solid rgba(0,200,120,0.35);
+}

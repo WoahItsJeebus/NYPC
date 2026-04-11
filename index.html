@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+		<meta name="theme-color" content="#0b0f17">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+		<title>NY Pension Calendar</title>
+		<link rel="icon" href="favicon.ico" sizes="any">
+		<link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
+		<link rel="stylesheet" href="https://woahitsjeebus.github.io/JUIL/assets/site.css">
+		<link rel="stylesheet" href="./assets/site.css">
+	</head>
+
+	<body>
+		<!-- ── Infinite draggable grid ──────────────────────────── -->
+		<div id="gridViewport">
+			<div id="gridSurface">
+				<div id="gridCursorGlow"></div>
+				<div id="gridGlow"></div>
+				<div id="gridOrigin"></div>
+				<div id="calendarMount"></div>
+			</div>
+		</div>
+
+		<!-- ── Month selector (fixed UI) ───────────────────────── -->
+		<div id="monthSelector">
+			<button id="prevMonth" aria-label="Previous month">&#9664;</button>
+			<span id="monthLabel"></span>
+			<button id="nextMonth" aria-label="Next month">&#9654;</button>
+		</div>
+
+		<!-- ── Legend ───────────────────────────────────────────── -->
+		<div id="legend">
+			<span class="legend-item"><span class="legend-swatch mailing"></span>M = Check Mailing</span>
+			<span class="legend-item"><span class="legend-swatch deposit"></span>D = Direct Deposit</span>
+		</div>
+
+		<!-- ── Floating UI layer (tab bar only) ─────────────────── -->
+		<div id="gridContent">
+			<div class="tabsBar" style="width:100%;">
+				<nav class="tabs"><a class="tabBtn active" data-tab="home" href="./"><span class="tabDot"></span>Home</a><a class="tabBtn" data-tab="settings" href="https://woahitsjeebus.github.io/JUIL/pages/settings/"><span class="tabDot"></span>Settings</a><a class="tabBtn" data-tab="about" href="./pages/about/"><span class="tabDot"></span>About</a></nav>
+			</div>
+		</div>
+
+		<!-- ── Coordinate readout ──────────────────────────────── -->
+		<div id="coordPill">0, 0</div>
+
+		<script type="module">
+			import { initPage, loadVersionBadge, initGridDrag } from "./assets/site.js"
+			import { initCalendar } from "./assets/calendar.js"
+			initPage("home")
+			loadVersionBadge()
+			const grid = initGridDrag()
+			initCalendar(grid)
+		</script>
+	</body>
+</html>
