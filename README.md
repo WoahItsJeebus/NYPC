@@ -5,7 +5,7 @@
 
 A wall-calendar view of NY State pension payment dates (check mailing & direct deposit), rendered on an infinite draggable/zoomable grid.
 
-Data sourced from [osc.ny.gov](https://www.osc.ny.gov/retirement/retirees/pension-payment-calendar).
+Data sourced from [osc.ny.gov](https://www.osc.ny.gov/retirement/retirees/pension-payment-calendar). Future dates will be added automatically as their site is updated. If their URL changes for the location of these dates, this tool will break.
 
 #### <i><b>Check my tools out [here](https://woahitsjeebus.github.io/JApps/)!</b></i>
 
