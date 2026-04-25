@@ -32,6 +32,7 @@ const MONTH_NAMES = [
 	"July", "August", "September", "October", "November", "December",
 ]
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+const DAY_MS = 24 * 60 * 60 * 1000
 
 const CELL_W = 130
 const CELL_H = 100
@@ -42,6 +43,68 @@ let _currentYear = 2026
 function getPayment(year, month) {
 	const y = ALL_PAYMENTS[year]
 	return y ? y[month] : null
+}
+
+function getUpcomingPaymentInfo(type, fromDate = new Date()) {
+	const start = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate())
+	const events = []
+
+	for (const [yearStr, months] of Object.entries(ALL_PAYMENTS)) {
+		const year = Number(yearStr)
+		for (const [monthStr, payment] of Object.entries(months)) {
+			const month = Number(monthStr)
+			if (type === "mailing") {
+				events.push({
+					type: "mailing",
+					target: new Date(year, month, payment.mailing),
+					year,
+					month,
+					day: payment.mailing,
+				})
+			}
+			if (type === "deposit") {
+				events.push({
+					type: "deposit",
+					target: new Date(year, month, payment.deposit),
+					year,
+					month,
+					day: payment.deposit,
+				})
+			}
+		}
+	}
+
+	events.sort((a, b) => a.target - b.target)
+	const next = events.find(e => e.target >= start)
+	if (!next) return null
+
+	const daysUntil = Math.round((next.target - start) / DAY_MS)
+	return { ...next, daysUntil }
+}
+
+function formatCountdownText(type, next) {
+	if (!next) {
+		return type === "mailing"
+			? "No upcoming mailing day in current data"
+			: "No upcoming direct deposit day in current data"
+	}
+
+	const dayWord = next.daysUntil === 1 ? "day" : "days"
+	const typeLabel = type === "mailing" ? "mailing" : "direct deposit"
+	return `${next.daysUntil} ${dayWord} until ${typeLabel} day (${MONTH_NAMES[next.month]} ${next.day}, ${next.year})`
+}
+
+function updateCountdownLabels() {
+	const mailingLabel = document.getElementById("countdownMailing")
+	const depositLabel = document.getElementById("countdownDeposit")
+	if (!mailingLabel || !depositLabel) return
+
+	const now = new Date()
+	const nextMailing = getUpcomingPaymentInfo("mailing", now)
+	const nextDeposit = getUpcomingPaymentInfo("deposit", now)
+
+	mailingLabel.textContent = formatCountdownText("mailing", nextMailing)
+	depositLabel.textContent = formatCountdownText("deposit", nextDeposit)
 }
 
 function buildCalendar(mount) {
@@ -55,6 +118,18 @@ function buildCalendar(mount) {
 	title.className = "cal-title"
 	title.textContent = "NY Pension Payment Calendar"
 	wrap.appendChild(title)
+
+	const mailingCountdown = document.createElement("div")
+	mailingCountdown.className = "cal-countdown mailing"
+	mailingCountdown.id = "countdownMailing"
+	mailingCountdown.textContent = "Loading upcoming mailing day..."
+	wrap.appendChild(mailingCountdown)
+
+	const depositCountdown = document.createElement("div")
+	depositCountdown.className = "cal-countdown deposit"
+	depositCountdown.id = "countdownDeposit"
+	depositCountdown.textContent = "Loading upcoming direct deposit day..."
+	wrap.appendChild(depositCountdown)
 
 	const subtitle = document.createElement("div")
 	subtitle.className = "cal-subtitle"
@@ -87,6 +162,7 @@ function renderMonth() {
 	if (label) label.textContent = `${MONTH_NAMES[_currentMonth]} ${_currentYear}`
 
 	const payment = getPayment(_currentYear, _currentMonth)
+	updateCountdownLabels()
 
 	// Day-of-week header
 	for (const d of DAY_NAMES) {
