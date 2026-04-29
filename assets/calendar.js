@@ -83,7 +83,7 @@ function updateCountdownLabels() {
 	depositLabel.textContent = formatCountdownText("deposit", _currentYear, _currentMonth, payment.deposit, depositDays)
 }
 
-function buildCalendar(mount) {
+function buildCalendar(mount, source = null) {
 	mount.innerHTML = ""
 
 	const wrap = document.createElement("div")
@@ -92,7 +92,7 @@ function buildCalendar(mount) {
 	// Title
 	const title = document.createElement("div")
 	title.className = "cal-title"
-	title.textContent = "NY Pension Payment Calendar"
+	title.textContent = source?.title ?? "NY Pension Payment Calendar"
 	wrap.appendChild(title)
 
 	const mailingCountdown = document.createElement("div")
@@ -109,7 +109,12 @@ function buildCalendar(mount) {
 
 	const subtitle = document.createElement("div")
 	subtitle.className = "cal-subtitle"
-	subtitle.innerHTML = `Source: <a href="https://www.osc.ny.gov/retirement/retirees/pension-payment-calendar" target="_blank" rel="noopener">osc.ny.gov</a>`
+	if (source?.url) {
+		const hostname = new URL(source.url).hostname
+		subtitle.innerHTML = `Source: <a href="${source.url}" target="_blank" rel="noopener">${hostname}</a>`
+	} else {
+		subtitle.innerHTML = `Source: <a href="https://www.osc.ny.gov/retirement/retirees/pension-payment-calendar" target="_blank" rel="noopener">osc.ny.gov</a>`
+	}
 	wrap.appendChild(subtitle)
 
 	// Version badge
@@ -226,8 +231,6 @@ export function initCalendar(grid) {
 	const mount = document.getElementById("calendarMount")
 	if (!mount) return
 
-	buildCalendar(mount)
-
 	// Wire up month selector buttons
 	document.getElementById("prevMonth")?.addEventListener("click", e => {
 		e.stopPropagation()
@@ -238,9 +241,18 @@ export function initCalendar(grid) {
 		changeMonth(1)
 	})
 
-	// Load version badge
-	fetch("./assets/versions.json", { cache: "no-store" })
+	// Load calendar sources, then build; load version badge after DOM is ready
+	fetch("./assets/calendar-sources.json", { cache: "no-store" })
 		.then(r => r.ok ? r.json() : Promise.reject())
-		.then(d => { const el = document.getElementById("versionCode"); if (el) el.textContent = `v${d.current || "?"}` })
-		.catch(() => {})
+		.then(d => {
+			const source = d.sources?.find(s => s.active) ?? d.sources?.[0] ?? null
+			buildCalendar(mount, source)
+		})
+		.catch(() => buildCalendar(mount))
+		.finally(() => {
+			fetch("./assets/versions.json", { cache: "no-store" })
+				.then(r => r.ok ? r.json() : Promise.reject())
+				.then(d => { const el = document.getElementById("versionCode"); if (el) el.textContent = `v${d.current || "?"}` })
+				.catch(() => {})
+		})
 }
